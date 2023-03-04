@@ -8,34 +8,47 @@ import java.net.http.HttpResponse;
 
 public class RestAPICall {
 
+    static HttpClient httpClient = HttpClient.newHttpClient();
+    static Gson gson = new Gson();
     public static void main(String[] args) throws Exception{
 
-    //
+
         TransciptObject transciptObject = new TransciptObject();
+        HttpResponse<String>  transcription ;
+
         transciptObject.setAudio_url("https://www.youtube.com/watch?v=JhU0yO43b6o");
-        Gson gson = new Gson();
+
         String jsonRequest = gson.toJson(transciptObject);
+
         System.out.println(jsonRequest);
+        HttpRequest httpRequest = requestBuilder(jsonRequest);
+
+        transcription =  httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        transciptObject = gson.fromJson(transcription.body(),TransciptObject.class);
+
+        System.out.println(transciptObject.getId());
+        transciptObject = getTranscriptionResult(transciptObject);
+
+        System.out.println("Transcription complete ! ");
+        System.out.println(transciptObject.getText());
 
 
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(new URI("https://api.assemblyai.com/v2/transcript"))
+
+    }
+
+    public static HttpRequest requestBuilder(String jsonRequest) throws Exception{
+        return HttpRequest.newBuilder()
+                .uri(new URI(Constants.ASSEMBLY_AI_URI))
                 .header("Authorization",Constants.API_KEY)
                 .POST(HttpRequest.BodyPublishers.ofString(jsonRequest))
                 .build();
 
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpResponse<String>  transcription ;
+    }
 
-       transcription =  httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-        transciptObject =   gson.fromJson(transcription.body(),TransciptObject.class);
-
-        System.out.println(transciptObject.getId());
-
+    public static TransciptObject getTranscriptionResult (TransciptObject transciptObject) throws Exception {
 
         HttpRequest getRequestResult = HttpRequest.newBuilder()
-                .uri(new URI("https://api.assemblyai.com/v2/transcript/" + transciptObject.getId() ))
+                .uri(new URI(Constants.ASSEMBLY_AI_URI + "/" + transciptObject.getId() ))
                 .header("Authorization",Constants.API_KEY)
                 .build();
 
@@ -54,8 +67,7 @@ public class RestAPICall {
             Thread.sleep(1000);
         }
 
-        System.out.println("Transcription complete ! ");
-        System.out.println(transciptObject.getText());
-
+        return transciptObject;
     }
+
 }
