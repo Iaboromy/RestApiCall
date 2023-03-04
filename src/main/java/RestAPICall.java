@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class RestAPICall {
@@ -11,6 +13,9 @@ public class RestAPICall {
     static HttpClient httpClient = HttpClient.newHttpClient();
     static Gson gson = new Gson();
     public static void main(String[] args) throws Exception{
+
+        Logger logger = Logger.getLogger(RestAPICall.class.getName());
+
 
 
         TransciptObject transciptObject = new TransciptObject();
@@ -21,6 +26,8 @@ public class RestAPICall {
         String jsonRequest = gson.toJson(transciptObject);
 
         System.out.println(jsonRequest);
+        logger.log(Level.INFO,"JSON REQUEST  : " + jsonRequest );
+
         HttpRequest httpRequest = requestBuilder(jsonRequest);
 
         transcription =  httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
