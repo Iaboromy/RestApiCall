@@ -12,11 +12,8 @@ public class RestAPICall {
 
     static HttpClient httpClient = HttpClient.newHttpClient();
     static Gson gson = new Gson();
+    static Logger logger = Logger.getLogger(RestAPICall.class.getName());
     public static void main(String[] args) throws Exception{
-
-        Logger logger = Logger.getLogger(RestAPICall.class.getName());
-
-
 
         TransciptObject transciptObject = new TransciptObject();
         HttpResponse<String>  transcription ;
@@ -25,7 +22,7 @@ public class RestAPICall {
 
         String jsonRequest = gson.toJson(transciptObject);
 
-        System.out.println(jsonRequest);
+        //System.out.println(jsonRequest);
         logger.log(Level.INFO,"JSON REQUEST  : " + jsonRequest );
 
         HttpRequest httpRequest = requestBuilder(jsonRequest);
@@ -33,11 +30,15 @@ public class RestAPICall {
         transcription =  httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
         transciptObject = gson.fromJson(transcription.body(),TransciptObject.class);
 
-        System.out.println(transciptObject.getId());
+        //System.out.println(transciptObject.getId());
+        logger.log(Level.INFO,"JSON REQUEST RECEIVED ID  : " + jsonRequest );
         transciptObject = getTranscriptionResult(transciptObject);
 
-        System.out.println("Transcription complete ! ");
-        System.out.println(transciptObject.getText());
+        //System.out.println("Transcription complete ! ");
+        //System.out.println(transciptObject.getText());
+        logger.log(Level.INFO,"TRANSCRIPTION COMPLETE ! ");
+        logger.log(Level.INFO,"TRANSCRIPTION RESULT   : " + transciptObject.getText());
+
 
 
 
@@ -64,7 +65,9 @@ public class RestAPICall {
             HttpResponse<String> getResponse = httpClient.send(getRequestResult, HttpResponse.BodyHandlers.ofString());
             transciptObject = gson.fromJson(getResponse.body(),TransciptObject.class);
 
-            System.out.println(transciptObject.getStatus());
+            //System.out.println(transciptObject.getStatus());
+
+            logger.log(Level.INFO,"CURRENT STATUS : " + transciptObject.getStatus());
 
             if ("completed".equals(transciptObject.getStatus()) || "error".equals(transciptObject.getStatus())) {
                 break;
