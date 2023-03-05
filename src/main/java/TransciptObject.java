@@ -6,6 +6,14 @@ public class TransciptObject {
     private String status;
     private String text;
 
+    private String error;
+    public String getError() {
+        return error;
+    }
+
+
+
+
     public String getId() {
         return id;
     }

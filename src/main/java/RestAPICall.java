@@ -16,35 +16,29 @@ public class RestAPICall {
     public static void main(String[] args) throws Exception{
 
         TransciptObject transciptObject = new TransciptObject();
+
         HttpResponse<String>  transcription ;
 
         transciptObject.setAudio_url("https://www.youtube.com/watch?v=JhU0yO43b6o");
 
-        String jsonRequest = gson.toJson(transciptObject);
-
-        //System.out.println(jsonRequest);
-        logger.log(Level.INFO,"JSON REQUEST  : " + jsonRequest );
+        String jsonRequest = GsonObjectToJson(transciptObject);
 
         HttpRequest httpRequest = requestBuilder(jsonRequest);
 
-        transcription =  httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        transciptObject = gson.fromJson(transcription.body(),TransciptObject.class);
+        transcription = assemblyAISend(httpRequest);
 
-        //System.out.println(transciptObject.getId());
-        logger.log(Level.INFO,"JSON REQUEST RECEIVED ID  : " + jsonRequest );
-        transciptObject = getTranscriptionResult(transciptObject);
+        transciptObject = getTranscriptionResult(gson.fromJson(transcription.body(),TransciptObject.class));
 
-        //System.out.println("Transcription complete ! ");
-        //System.out.println(transciptObject.getText());
-        logger.log(Level.INFO,"TRANSCRIPTION COMPLETE ! ");
-        logger.log(Level.INFO,"TRANSCRIPTION RESULT   : " + transciptObject.getText());
-
-
-
+        if (transciptObject.getText() == null || transciptObject.getStatus().equals("error")) {
+            logger.log(Level.SEVERE,"TRANSCRIPTION ERROR :  " + transciptObject.getError());
+        }
+        else {
+            logger.log(Level.INFO,"TRANSCRIPTION RESULT   : " + transciptObject.getText());
+        }
 
     }
 
-    public static HttpRequest requestBuilder(String jsonRequest) throws Exception{
+     static HttpRequest requestBuilder(String jsonRequest) throws Exception{
         return HttpRequest.newBuilder()
                 .uri(new URI(Constants.ASSEMBLY_AI_URI))
                 .header("Authorization",Constants.API_KEY)
@@ -53,8 +47,9 @@ public class RestAPICall {
 
     }
 
-    public static TransciptObject getTranscriptionResult (TransciptObject transciptObject) throws Exception {
+     static TransciptObject getTranscriptionResult (TransciptObject transciptObject) throws Exception {
 
+        logger.log(Level.INFO, "Waiting result for transcriptionid: {"+transciptObject.getId()+"}");
         HttpRequest getRequestResult = HttpRequest.newBuilder()
                 .uri(new URI(Constants.ASSEMBLY_AI_URI + "/" + transciptObject.getId() ))
                 .header("Authorization",Constants.API_KEY)
@@ -65,19 +60,39 @@ public class RestAPICall {
             HttpResponse<String> getResponse = httpClient.send(getRequestResult, HttpResponse.BodyHandlers.ofString());
             transciptObject = gson.fromJson(getResponse.body(),TransciptObject.class);
 
-            //System.out.println(transciptObject.getStatus());
 
             logger.log(Level.INFO,"CURRENT STATUS : " + transciptObject.getStatus());
 
             if ("completed".equals(transciptObject.getStatus()) || "error".equals(transciptObject.getStatus())) {
                 break;
-
             }
 
             Thread.sleep(1000);
         }
 
+
+        logger.log(Level.INFO,"TRANSCRIPTION COMPLETE ! ");
+
         return transciptObject;
+    }
+
+     static String GsonObjectToJson(TransciptObject transciptObject) {
+        Gson gson = new Gson();
+        String result = gson.toJson(transciptObject);
+        logger.log(Level.INFO,"Object to JSON : " + result);
+        return result;
+    }
+
+     static HttpResponse<String> assemblyAISend(HttpRequest httpRequest) throws Exception{
+
+        logger.log(Level.INFO, "Sending request to {"+ Constants.ASSEMBLY_AI_URI +"}");
+
+        HttpResponse<String> response =   httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+        logger.log(Level.INFO, "Assembly AI JSON Response : " + response.body());
+
+
+        return response;
     }
 
 }
